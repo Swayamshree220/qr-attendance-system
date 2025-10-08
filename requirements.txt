@@ -7,6 +7,6 @@ itsdangerous
 scikit-learn
 pandas
 joblib
-gunicorn          <-- This MUST be on its own line
+gunicorn 
 psycopg2-binary
 pytz
