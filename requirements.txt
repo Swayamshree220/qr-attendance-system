@@ -1,12 +1,12 @@
-# qr_attendance/requirements.txt
 Flask
-SQLAlchemy
 Flask-SQLAlchemy
 Flask-Login
+Flask-Mail
 qrcode
-pyzbar
-numpy
-pandas
+itsdangerous
 scikit-learn
-# face-recognition # This requires dlib, which might need C++ build tools
-opencv-python # For face recognition, if not using face-recognition library solely
+pandas
+joblib
+gunicorn          <-- ADD THIS LINE
+psycopg2-binary   <-- ENSURE THIS IS PRESENT FOR POSTGRES
+pytz
