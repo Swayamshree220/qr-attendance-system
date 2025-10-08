@@ -7,6 +7,6 @@ itsdangerous
 scikit-learn
 pandas
 joblib
-gunicorn          <-- ADD THIS LINE
-psycopg2-binary   <-- ENSURE THIS IS PRESENT FOR POSTGRES
+gunicorn          <-- This MUST be on its own line
+psycopg2-binary
 pytz
