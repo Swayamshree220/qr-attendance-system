@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="jumbotron">
+        <h1 class="display-4">Welcome to Smart QR-Based Attendance System!</h1>
+        <p class="lead">Efficiently manage student attendance with QR codes and AI-powered proxy detection.</p>
+        <hr class="my-4">
+        {% if current_user.is_authenticated %}
+            <p>You are logged in as {{ current_user.name }} ({{ current_user.role.capitalize() }}).</p>
+            {% if current_user.role == 'teacher' %}
+                <p>Go to <a href="{{ url_for('routes.generate_qr_page') }}">Generate QR</a> to start a new session.</p>
+            {% elif current_user.role == 'student' %}
+                <p>Go to <a href="{{ url_for('routes.scan_qr_page') }}">Scan QR</a> to mark your attendance.</p>
+            {% elif current_user.role == 'admin' %}
+                <p>Visit the <a href="{{ url_for('routes.dashboard') }}">Dashboard</a> to view system statistics.</p>
+            {% endif %}
+        {% else %}
+            <p>Please <a href="{{ url_for('routes.login') }}">Login</a> or <a href="{{ url_for('routes.register') }}">Register</a> to continue.</p>
+        {% endif %}
+    </div>
+{% endblock content %}

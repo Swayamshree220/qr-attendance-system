@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Scan QR Code{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-5">
+                <div class="card-header text-center">
+                    <h3>Scan QR Code to Mark Attendance</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3 text-center">
+                        <!-- Camera feed container -->
+                        <div id="reader" style="width: 100%; max-width: 400px; border: 1px solid #ccc; margin: 0 auto;"></div>
+                        <p class="mt-2" id="qr-status">Scanning for QR code...</p>
+                        <p id="geo-status" class="text-muted">Fetching your location...</p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h5>Attendance Result:</h5>
+                        <div id="attendance-result" class="alert alert-secondary text-center">No attempt yet.</div>
+                        <div class="card-text mt-3">
+                            <p id="student-info" class="text-muted" style="display: none;"></p>
+                            <p id="proxy-status" class="text-muted" style="display: none;"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+    const qrStatus = document.getElementById('qr-status');
+    const geoStatus = document.getElementById('geo-status');
+    const attendanceResult = document.getElementById('attendance-result');
+    const studentInfo = document.getElementById('student-info');
+    const proxyStatus = document.getElementById('proxy-status');
+    
+    let isProcessing = false;
+    let scanReady = true; // NEW: Cooldown flag
+    let userLocation = null;
+    let html5QrCode = null;
+
+    function getUserLocation() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject('Geolocation is not supported by your browser.');
+            } else {
+                geoStatus.textContent = 'Fetching your location...';
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        geoStatus.textContent = 'Location fetched!';
+                        resolve({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        });
+                    },
+                    error => {
+                        geoStatus.textContent = 'Error fetching location.';
+                        reject('Error fetching location: ' + error.message);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            }
+        });
+    }
+
+    async function onScanSuccess(decodedText, decodedResult) {
+        // Cooldown Check
+        if (isProcessing || !scanReady) {
+            qrStatus.textContent = "Processing... Please wait for confirmation.";
+            return; 
+        }
+        
+        isProcessing = true;
+        scanReady = false; 
+        qrStatus.textContent = `QR Code Scanned! Checking location...`;
+        qrStatus.style.color = 'green';
+        
+        // Show cooldown timer (visual feedback)
+        let cooldownSeconds = 5;
+        const cooldownInterval = setInterval(() => {
+            cooldownSeconds--;
+            if (cooldownSeconds >= 0) {
+                qrStatus.textContent = `Processing completed. Ready for new scan in ${cooldownSeconds}s.`;
+            }
+        }, 1000);
+
+        try {
+            userLocation = await getUserLocation();
+            
+            html5QrCode.stop().then(() => {
+                fetch("{{ url_for('routes.mark_attendance') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        qr_data: decodedText,
+                        user_lat: userLocation.latitude,
+                        user_lon: userLocation.longitude
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        attendanceResult.textContent = `Success! Attendance marked for ${data.student.name}.`;
+                        attendanceResult.className = 'alert alert-success';
+                        studentInfo.textContent = `Student ID: ${data.student.roll}`;
+                        studentInfo.style.display = 'block';
+                        proxyStatus.textContent = `Proxy Status: ${data.student.proxy_flag}`;
+                        proxyStatus.style.display = 'block';
+                        if (data.student.proxy_flag === 'Suspicious') {
+                            attendanceResult.textContent += " (Flagged as SUSPICIOUS!)";
+                            attendanceResult.className = 'alert alert-warning';
+                        }
+                    } else {
+                        attendanceResult.textContent = `Error: ${data.message}`;
+                        attendanceResult.className = 'alert alert-danger';
+                        studentInfo.style.display = 'none';
+                        proxyStatus.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    attendanceResult.textContent = `Network Error: ${error}`;
+                    attendanceResult.className = 'alert alert-danger';
+                    console.error('Fetch error:', error);
+                });
+            }).catch(err => {
+                console.error("Failed to stop scanner:", err);
+            });
+
+        } catch (error) {
+            qrStatus.textContent = "Error during scan.";
+            attendanceResult.textContent = `Error: ${error}`;
+            attendanceResult.className = 'alert alert-danger';
+            console.error('Geolocation or other error:', error);
+        } finally {
+            // Cleanup and reset after a delay
+            clearInterval(cooldownInterval);
+            setTimeout(() => {
+                isProcessing = false;
+                scanReady = true; // Unlock scanner
+                qrStatus.textContent = "Scanning for QR code...";
+                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
+            }, 5000); // 5-second total cooldown time
+        }
+    }
+
+    function onScanError(errorMessage) {
+        // Log this for debugging but it's not necessary for the user
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+        html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
+    });
+</script>
+{% endblock %}

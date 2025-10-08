@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mt-5">
+            <div class="card-header text-center">
+                <h3>Attendance Dashboard</h3>
+            </div>
+            <div class="card-body">
+                {% if records %}
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Class Name</th>
+                            <th>Attendance Time</th>
+                            <th>Proxy Flag</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record, user, class_session in records %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.name }}</td>
+                            <td>{{ class_session.class_name }}</td>
+                            <td>{{ record.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                {% if record.ml_proxy_flag == 'Suspicious' %}
+                                    <span class="badge bg-danger">{{ record.ml_proxy_flag }}</span>
+                                {% else %}
+                                    <span class="badge bg-success">{{ record.ml_proxy_flag }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-center text-muted">No attendance records found yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

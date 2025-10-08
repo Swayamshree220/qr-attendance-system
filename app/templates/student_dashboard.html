@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}My Attendance Records{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">My Attendance History</h2>
+    <p class="lead">Viewing all classes you have marked attendance for.</p>
+    
+    {% if records %}
+    <table class="table table-hover table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Class Name</th>
+                <th>Date & Time (IST)</th>
+                <th>Status</th>
+                <th>Proxy Flag</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- FIX APPLIED HERE: Unpack four variables: record, session, user, and ist_time -->
+            {% for record, session, user, ist_time in records %}
+            <tr id="row-{{ record.id }}"> 
+                <td>{{ session.class_name }}</td>
+                <!-- Use the pre-formatted IST time -->
+                <td>{{ ist_time.strftime('%Y-%m-%d %I:%M %p IST') }}</td>
+                <td>
+                    {% if record.is_present %}
+                    <span class="badge bg-success">PRESENT</span>
+                    {% else %}
+                    <span class="badge bg-danger">ABSENT</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if record.proxy_detected == 'Suspicious' %}
+                    <span class="badge bg-warning text-dark">SUSPICIOUS</span>
+                    {% else %}
+                    <span class="badge bg-primary">Legit Check</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- Delete button uses the unique Attendance record ID -->
+                    <button class="btn btn-sm btn-danger delete-btn" data-id="{{ record.id }}">
+                        Delete
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        You have no attendance records yet. Please scan a QR code to begin.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const recordId = this.getAttribute('data-id');
+                
+                if (!confirm('Are you sure you want to delete this attendance record? This action cannot be undone.')) {
+                    return;
+                }
+
+                // Call the backend API to delete the record
+                fetch(`/delete-attendance/${recordId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the row from the table visually
+                        const row = document.getElementById(`row-${recordId}`);
+                        if (row) {
+                            row.remove();
+                        }
+                        console.log('Record successfully deleted!');
+                    } else {
+                        alert('Error deleting record: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Network error during deletion.');
+                    console.error('Delete error:', error);
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

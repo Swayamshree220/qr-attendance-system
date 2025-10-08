@@ -1,0 +1,12 @@
+# qr_attendance/requirements.txt
+Flask
+SQLAlchemy
+Flask-SQLAlchemy
+Flask-Login
+qrcode
+pyzbar
+numpy
+pandas
+scikit-learn
+# face-recognition # This requires dlib, which might need C++ build tools
+opencv-python # For face recognition, if not using face-recognition library solely
