@@ -506,3 +506,27 @@ def export_report(session_id):
                      mimetype='text/csv',
                      as_attachment=True,
                      download_name=file_name)
+@bp.route('/delete-session/<session_id>', methods=['POST'])
+@login_required
+def delete_session(session_id):
+    # 1. Retrieve the session record
+    session = ClassSession.query.get(session_id)
+    
+    if not session:
+        return jsonify({'success': False, 'message': 'Session not found.'}), 404
+        
+    # 2. CRITICAL SECURITY CHECK: Ensure the logged-in user owns this record.
+    if session.teacher_id != current_user.id and current_user.role != 'admin':
+        return jsonify({'success': False, 'message': 'Permission denied. You can only delete your own sessions.'}), 403
+
+    try:
+        # 3. Delete dependent records first (Attendance)
+        Attendance.query.filter_by(session_id=session_id).delete()
+        
+        # 4. Delete the session
+        db.session.delete(session)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Session and all related attendance records deleted.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Database error during deletion: {str(e)}'}), 500
