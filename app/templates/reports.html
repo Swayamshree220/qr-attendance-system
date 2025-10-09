@@ -30,17 +30,17 @@
             <tr>
                 <th>Student ID</th>
                 <th>Name</th>
-                <th>Timestamp</th>
+                <th>Timestamp (IST)</th>
                 <th>Proxy Status</th>
             </tr>
         </thead>
         <tbody>
-            <!-- FIX APPLIED HERE: Unpack three variables -->
-            {% for record, user, session in records %}
+            <!-- FIX APPLIED: Unpack four variables (record, user, session, ist_time) -->
+            {% for record, user, session, ist_time in records %} 
             <tr>
                 <td>{{ user.id }}</td>
                 <td>{{ user.name }}</td>
-                <td>{{ record.timestamp }}</td>
+                <td>{{ ist_time.strftime('%Y-%m-%d %I:%M %p IST') }}</td>
                 <td>
                     {% if record.proxy_detected == 'Suspicious' %}
                     <span class="badge bg-warning text-dark">Suspicious</span>
@@ -65,10 +65,9 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
+    // This script runs only if records exist.
     {% if records %}
-        // FIX: The query now returns (Attendance, User, ClassSession).
-        // records[0] contains the first tuple: (Attendance, User, ClassSession)
-        // Access ClassSession (the third element) at index [2].
+        // Access ClassSession (index [2]) to get qr_data
         const qrDataString = "{{ records[0][2].qr_data }}"; 
         
         // Use regular expression to safely extract LAT and LON values
