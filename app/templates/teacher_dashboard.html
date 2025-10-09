@@ -10,19 +10,29 @@
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
         {% for session in sessions %}
         <div class="col" id="session-card-{{ session.id }}">
+            <!-- Card for each session -->
             <div class="card h-100 shadow-sm session-card">
                 <div class="card-body">
-                    <!-- ... (content omitted) ... -->
-                </div>
-                <!-- Card Footer with View Report and Delete Icon -->
-                <div class="card-footer d-flex justify-content-between align-items-center bg-light">
-                    <!-- FIX: Ensure the route name and session_id variable are correct -->
-                    <a href="{{ url_for('routes.view_reports', session_id=session.id) }}" 
-                       class="btn btn-sm btn-outline-primary flex-grow-1 me-2">
-                       View Report
-                    </a>
+                    <!-- FIX APPLIED: Accessing the class_name property -->
+                    <h5 class="card-title text-primary">{{ session.class_name }}</h5>
+                    <p class="card-text text-muted">Session ID: {{ session.id[:8] }}...</p>
                     
-                    <!-- Delete Button -->
+                    <ul class="list-group list-group-flush mt-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <i class="fas fa-clock text-info"></i> Start Time
+                            <!-- FIX APPLIED: Accessing the formatted start_time property -->
+                            <span class="badge bg-info text-dark">{{ session.start_time }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <i class="fas fa-user-check text-success"></i> Attendees
+                            <span class="badge bg-success attendance-count">{{ session.attendee_count }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center bg-light">
+                    <!-- Link to reports uses the session ID -->
+                    <a href="{{ url_for('routes.view_reports', session_id=session.id) }}" class="btn btn-sm btn-outline-primary flex-grow-1 me-2">View Report</a>
+                    
                     <button class="btn btn-sm btn-outline-danger delete-session-btn" data-id="{{ session.id }}">
                         <i class="fas fa-trash-alt"></i> Delete
                     </button>
@@ -43,9 +53,17 @@
 <!-- Add Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <style>
-/* ... (CSS styles and JS omitted for brevity) ... */
+.session-card {
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
+    border: 1px solid #ddd;
+}
+.session-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(52, 152, 219, 0.2);
+    border-color: #3498db;
+}
 </style>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Event listener for deleting a session card
