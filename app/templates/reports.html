@@ -4,11 +4,13 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-4">Attendance Report for Session: {{ session_id }}</h2>
+    <!-- FIX APPLIED: Access class_name from the first record's ClassSession object (index [2]) -->
+    <h2 class="mb-4">Attendance Report for {{ records[0][2].class_name }}</h2>
+    <p class="lead">Session ID: {{ session_id }}</p>
     
     {% if records %}
     
-    <!-- GeoFence Map Section (Requires the first record's data to initialize) -->
+    <!-- GeoFence Map Section -->
     <div class="card mb-4 shadow-sm">
         <div class="card-header bg-primary text-white">
             <h5 class="mb-0">📍 Geofence Visualization (Expected Location)</h5>
@@ -35,7 +37,7 @@
             </tr>
         </thead>
         <tbody>
-            <!-- FIX APPLIED: Unpack four variables (record, user, session, ist_time) -->
+            <!-- Loop variables: record (Attendance), user (User), session (ClassSession), ist_time (Formatted Time) -->
             {% for record, user, session, ist_time in records %} 
             <tr>
                 <td>{{ user.id }}</td>
