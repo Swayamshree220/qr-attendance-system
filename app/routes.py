@@ -327,20 +327,23 @@ def dashboard():
         
         # Parse the QR data string to extract start time
         try:
+            # We assume QR data string is safe to parse here: "CLASS:X|SESSION:Y|...|TIME:Z"
             qr_data_dict = dict(item.split(':', 1) for item in session.qr_data.split('|'))
             start_time_str = qr_data_dict.get('TIME', 'N/A')
-            
+            class_name = qr_data_dict.get('CLASS', 'N/A') # Ensure CLASS name is extracted
+
             # Convert UTC to IST before formatting
             start_time_utc = datetime.fromisoformat(start_time_str)
             start_time_ist = convert_utc_to_ist(start_time_utc)
             formatted_time = start_time_ist.strftime('%b %d, %I:%M %p IST')
 
         except Exception:
+            class_name = session.class_name if session.class_name else 'Unknown Class'
             formatted_time = 'Time N/A'
 
         dashboard_data.append({
             'id': session.id,
-            'class_name': session.class_name,
+            'class_name': class_name,
             'start_time': formatted_time,
             'attendee_count': attendance_count
         })
@@ -348,6 +351,7 @@ def dashboard():
     return render_template('teacher_dashboard.html', 
                            title='Teacher Dashboard', 
                            sessions=dashboard_data)
+
 
 # --- STUDENT DASHBOARD LOGIC (Updated to show IST) ---
 @bp.route('/student-dashboard', methods=['GET'])
